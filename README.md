@@ -230,5 +230,3 @@ pytest
 Project Deliverables:
 1. https://gamma.app/docs/Legal-Contract-Intelligence-Platform-swcgtvc4mi86m71?mode=doc
 2. https://docs.google.com/document/d/1u1ATQ1UbCB7MGS4LKG_hHCQiHUTk2tam8LGX71UEXOc/edit?usp=sharing (Detailed Technical Documentation)
-3. https://drive.google.com/file/d/1MN4DjH_7a1k0DY23GWuHpEdJosO_u6EM/view?usp=sharing ->project walkthrough
-4. https://drive.google.com/file/d/1NjwunKErBc3_cHzB5oJ1Q1nGMJRKZZkH/view?usp=sharing --> UI demo
