@@ -42,15 +42,12 @@ app.include_router(cuad_router)  # NEW
 app.include_router(feedback_router)  # NEW
 
 
+
 @app.on_event("startup")
 def _startup() -> None:
-    # Non-fatal: if Neo4j/env vars aren't configured yet, the API still
-    # starts (so you can serve the frontend and iterate on config) — but
-    # query/ingest calls will fail until it's fixed.
-    try:
-        preload_models(include_neo4j=True)
-    except Exception as exc:  # noqa: BLE001
-        print(f"[startup] preload_models failed (will retry lazily per-request): {exc}")
+    # Keep startup lightweight on Render's Free instance.
+    # AI models will be loaded only when the application needs them.
+    pass
 
 
 @app.get("/api/health")
