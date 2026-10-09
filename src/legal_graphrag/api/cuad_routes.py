@@ -45,7 +45,11 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from ..agents.legal_pipeline import build_legal_agent_graph
-from ..evaluation.cuad_loader import CUADExample, load_cuad, unique_contracts
+from ..evaluation.cuad_loader import (
+    CUADExample,
+    list_cuad_contracts,
+    load_cuad_contract,
+)
 from ..evaluation.cuad_ingest import ingest_cuad_contract
 from ..evaluation.per_question_ragas import score_single_question
 from ..evaluation.scripted_reviewer import run_scripted_pipeline
@@ -58,20 +62,22 @@ router = APIRouter(prefix="/api/cuad", tags=["cuad"])
 # Lazily-loaded CUAD dataset + compiled graph (shared across requests)
 # ---------------------------------------------------------------------------
 
-@lru_cache(maxsize=1)
-def _examples() -> list[CUADExample]:
-    """Full CUAD example list (auto-downloaded from HF on first call). Cached."""
-    return load_cuad()
-
 
 @lru_cache(maxsize=1)
-def _contracts_by_collection() -> dict[str, CUADExample]:
-    """One representative example per unique contract — the PDF dropdown source."""
-    return unique_contracts(_examples())
+def _contracts_by_collection() -> dict[str, dict[str, str]]:
+    """Lightweight contract metadata for the PDF dropdown."""
+    return {
+        contract["collection_name"]: contract
+        for contract in list_cuad_contracts()
+    }
 
 
-def _examples_for_collection(collection_name: str) -> list[CUADExample]:
-    return [e for e in _examples() if e.collection_name == collection_name]
+@lru_cache(maxsize=1)
+def _examples_for_collection(
+    collection_name: str,
+) -> list[CUADExample]:
+    """Load and cache questions for only the selected contract."""
+    return load_cuad_contract(collection_name)
 
 
 def _example_by_qas_id(collection_name: str, qas_id: str) -> Optional[CUADExample]:
@@ -265,23 +271,38 @@ def _exact_match_eval(answer: Optional[str], ground_truth: str) -> dict:
 # ---------------------------------------------------------------------------
 
 @router.get("/contracts", response_model=list[CUADContract])
-def list_contracts(limit: int = 500, q: Optional[str] = None) -> list[CUADContract]:
-    """PDF dropdown source — all unique CUAD contracts (default cap 500)."""
+def list_contracts(
+    limit: int = 500,
+    q: Optional[str] = None,
+) -> list[CUADContract]:
+    """PDF dropdown source — all unique CUAD contracts."""
     ingested = _ingested_collections()
     rows = []
+
     for coll, ex in _contracts_by_collection().items():
-        if q and q.lower() not in ex.contract_title.lower() and q.lower() not in ex.contract_type.lower():
+        title = ex["contract_title"]
+        contract_type = ex["contract_type"]
+
+        if (
+            q
+            and q.lower() not in title.lower()
+            and q.lower() not in contract_type.lower()
+        ):
             continue
-        rows.append(CUADContract(
-            collection_name=coll,
-            contract_title=ex.contract_title,
-            contract_type=ex.contract_type,
-            ingested=coll in ingested,
-        ))
+
+        rows.append(
+            CUADContract(
+                collection_name=coll,
+                contract_title=title,
+                contract_type=contract_type,
+                ingested=coll in ingested,
+            )
+        )
+
         if len(rows) >= limit:
             break
-    return rows
 
+    return rows
 
 @router.get("/contracts/{collection_name}/questions", response_model=list[CUADQuestion])
 def list_questions(collection_name: str) -> list[CUADQuestion]:

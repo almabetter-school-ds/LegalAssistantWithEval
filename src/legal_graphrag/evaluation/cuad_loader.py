@@ -49,6 +49,7 @@ from __future__ import annotations
 import json
 import random
 import re
+import ijson
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -239,6 +240,87 @@ def load_cuad(json_path: str | Path | None = None) -> list[CUADExample]:
                 )
     return examples
 
+
+def _iter_cuad_documents(json_path: str | Path | None = None):
+    """Read CUAD one contract at a time instead of loading the entire JSON."""
+    if json_path is None:
+        json_path = download_cuad()
+
+    path = Path(json_path)
+    if not path.exists():
+        raise FileNotFoundError(f"CUAD JSON file does not exist: {path}")
+
+    with path.open("rb") as file:
+        yield from ijson.items(file, "data.item")
+
+
+def list_cuad_contracts(
+    json_path: str | Path | None = None,
+) -> list[dict[str, str]]:
+    """Return lightweight metadata for each unique contract."""
+    contracts: dict[str, dict[str, str]] = {}
+
+    for doc in _iter_cuad_documents(json_path):
+        title = doc.get("title", "")
+        if not title:
+            continue
+
+        collection_name = re.sub(r"\W+", "_", title).strip("_").lower()
+
+        contracts.setdefault(
+            collection_name,
+            {
+                "collection_name": collection_name,
+                "contract_title": title,
+                "contract_type": _parse_contract_type(title),
+            },
+        )
+
+    return list(contracts.values())
+
+
+def load_cuad_contract(
+    collection_name: str,
+    json_path: str | Path | None = None,
+) -> list[CUADExample]:
+    """Load questions and contract text for only the requested contract."""
+    for doc in _iter_cuad_documents(json_path):
+        title = doc.get("title", "")
+        current_name = re.sub(r"\W+", "_", title).strip("_").lower()
+
+        if current_name != collection_name:
+            continue
+
+        contract_type = _parse_contract_type(title)
+        examples: list[CUADExample] = []
+
+        for paragraph in doc.get("paragraphs", []):
+            contract_text = paragraph.get("context", "")
+
+            for qa in paragraph.get("qas", []):
+                examples.append(
+                    CUADExample(
+                        qas_id=qa["id"],
+                        contract_title=title,
+                        contract_type=contract_type,
+                        contract_text=contract_text,
+                        question=qa["question"],
+                        clause_category=_parse_clause_category(
+                            qa["question"]
+                        ),
+                        ground_truth_spans=[
+                            answer["text"]
+                            for answer in qa.get("answers", [])
+                        ],
+                        is_impossible=bool(
+                            qa.get("is_impossible", False)
+                        ),
+                    )
+                )
+
+        return examples
+
+    return []
 
 def unique_contracts(examples: list[CUADExample]) -> dict[str, CUADExample]:
     """One representative example per unique contract (by collection_name), for ingestion."""
