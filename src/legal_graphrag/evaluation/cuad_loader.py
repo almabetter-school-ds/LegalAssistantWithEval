@@ -257,24 +257,37 @@ def _iter_cuad_documents(json_path: str | Path | None = None):
 def list_cuad_contracts(
     json_path: str | Path | None = None,
 ) -> list[dict[str, str]]:
-    """Return lightweight metadata for each unique contract."""
+    """Return contract metadata without loading full contract documents."""
+    if json_path is None:
+        json_path = download_cuad()
+
+    path = Path(json_path)
+    if not path.exists():
+        raise FileNotFoundError(f"CUAD JSON file does not exist: {path}")
+
     contracts: dict[str, dict[str, str]] = {}
 
-    for doc in _iter_cuad_documents(json_path):
-        title = doc.get("title", "")
-        if not title:
-            continue
+    with path.open("rb") as file:
+        for prefix, event, value in ijson.parse(file):
+            if prefix != "data.item.title" or event != "string":
+                continue
 
-        collection_name = re.sub(r"\W+", "_", title).strip("_").lower()
+            title = value
+            if not title:
+                continue
 
-        contracts.setdefault(
-            collection_name,
-            {
-                "collection_name": collection_name,
-                "contract_title": title,
-                "contract_type": _parse_contract_type(title),
-            },
-        )
+            collection_name = re.sub(
+                r"\W+", "_", title
+            ).strip("_").lower()
+
+            contracts.setdefault(
+                collection_name,
+                {
+                    "collection_name": collection_name,
+                    "contract_title": title,
+                    "contract_type": _parse_contract_type(title),
+                },
+            )
 
     return list(contracts.values())
 
