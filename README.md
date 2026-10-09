@@ -227,6 +227,7 @@ pytest
 
 ```
 
-Project Deliverables:
+**Project Deliverables:**
+
 1. https://gamma.app/docs/Legal-Contract-Intelligence-Platform-swcgtvc4mi86m71?mode=doc
 2. https://docs.google.com/document/d/1u1ATQ1UbCB7MGS4LKG_hHCQiHUTk2tam8LGX71UEXOc/edit?usp=sharing (Detailed Technical Documentation)
