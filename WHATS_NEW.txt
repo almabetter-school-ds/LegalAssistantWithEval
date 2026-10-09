@@ -1,0 +1,27 @@
+Legal GraphRAG — CUAD Evaluation Console (additions)
+====================================================
+
+NEW FILES
+  legal_graphrag/api/cuad_routes.py                 CUAD endpoints (contracts, questions,
+                                                    on-demand ingest, ask, background metrics)
+  legal_graphrag/evaluation/per_question_ragas.py   single-question RAGAS scoring
+  frontend/index.html                               the web console (served at / by the API)
+
+EDITED (2 lines only — registers the new router)
+  legal_graphrag/api/main.py
+
+RUN
+  uvicorn legal_graphrag.api.main:app --reload --app-dir src
+  open http://127.0.0.1:8000/
+
+FRONTEND LOCATION
+  main.py serves FRONTEND_DIR = <project_root>/frontend  (parents[3] of api/main.py,
+  i.e. the folder that contains `src/`). This zip places frontend/ next to the
+  legal_graphrag package for convenience — if your repo uses a src/ layout, move
+  the frontend/ folder to your project root (the same level as src/) so the path
+  resolves. No code change needed either way; it's just a directory location.
+
+METRICS PREREQUISITE
+  The four RAGAS metrics need the eval extras (ragas, langchain-huggingface) and
+  HF_TOKEN in the environment — same as the existing batch evaluation. Without them
+  the answer + reasoning still render; only the metric cards report unavailable.

@@ -1,0 +1,77 @@
+# docker-compose.yml — Legal GraphRAG
+#
+#   docker compose up --build
+#   open http://localhost:8000/           (web console + API)
+#   open http://localhost:7474/           (Neo4j browser)
+#
+# Secrets/config come from a .env file next to this file (see .env.example).
+# Chroma data, uploads and the HF model cache persist in named/bind volumes,
+# so restarts don't re-ingest or re-download models.
+
+services:
+  # --------------------------------------------------------------------------
+  # Neo4j knowledge graph (GraphRAG store + audit trail)
+  # --------------------------------------------------------------------------
+  neo4j:
+    image: neo4j:5.26
+    container_name: legalrag-neo4j
+    restart: unless-stopped
+    environment:
+      # Username is always 'neo4j'; password comes from .env (NEO4J_PASSWORD).
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-please_change_me}"
+      NEO4J_server_memory_heap_max__size: "1G"
+      NEO4J_server_memory_pagecache_size: "512m"
+    ports:
+      - "7474:7474"   # HTTP browser
+      - "7687:7687"   # Bolt driver
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      # Wait until Bolt is actually answering before starting the app.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+
+  # --------------------------------------------------------------------------
+  # Legal GraphRAG API + web console
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: legalrag-app
+    restart: unless-stopped
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Point the app at the Neo4j service (overrides any localhost value in .env).
+      NEO4J_URI: "bolt://neo4j:7687"
+      NEO4J_USER: "neo4j"
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD:-please_change_me}"
+      # Persisted Chroma + model cache locations (match the Dockerfile).
+      CHROMA_PERSIST_DIR: "/app/data/chroma_db"
+      HF_HOME: "/app/.cache/huggingface"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist ingested vectors, metadata, uploads and the review error log.
+      - ./data:/app/data
+      # Persist downloaded embedding / reranker models across restarts.
+      - hf_cache:/app/.cache/huggingface
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health',timeout=4).status==200 else 1)\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s   # first boot downloads the embedding + reranker models
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  hf_cache:

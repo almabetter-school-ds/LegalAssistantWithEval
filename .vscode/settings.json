@@ -1,0 +1,19 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+  "python.analysis.extraPaths": ["${workspaceFolder}/src"],
+  "python.analysis.typeCheckingMode": "basic",
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.egg-info": true
+  },
+  "files.watcherExclude": {
+    "**/data/chroma_db/**": true,
+    "**/.venv/**": true
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system"
+}

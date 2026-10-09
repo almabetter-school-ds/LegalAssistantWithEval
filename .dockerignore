@@ -1,0 +1,43 @@
+# --- version control / IDE ---
+.git
+.gitignore
+.gitignore.save
+.idea
+.vscode
+
+# --- python caches / build artifacts ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- virtualenvs ---
+.venv/
+venv/
+env/
+
+# --- runtime data (persisted via volumes, not baked into the image) ---
+data/chroma_db/
+data/uploads/
+data/metadata/*.jsonl
+*.log
+
+# --- secrets ---
+.env
+*.env
+!.env.example
+
+# --- node / frontend build tooling (index.html is self-contained) ---
+node_modules/
+
+# --- packaging / misc ---
+*.zip
+*.tar.gz
+*.docx
+*.pdf
+ragas_evaluation_results.csv

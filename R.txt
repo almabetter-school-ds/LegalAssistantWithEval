@@ -1,0 +1,47 @@
+# --- PDF extraction / OCR ---
+pdfplumber
+pdf2image
+pytesseract
+
+# --- Embeddings / vector store ---
+# Installed separately with --no-deps to avoid pip downgrading an
+# already-installed torch/torchvision pair — see README "Setup" section.
+sentence-transformers
+chromadb
+rank_bm25
+
+# --- Agent orchestration ---
+langgraph
+# Optional, for a persistent checkpointer instead of MemorySaver (see
+# resources.py / agents/legal_pipeline.py's _default_checkpointer and the
+# CHECKPOINTER_BACKEND env var). Uncomment whichever backend you deploy with:
+# langgraph-checkpoint-postgres
+# psycopg[binary,pool]
+# langgraph-checkpoint-redis
+# redis
+
+# --- Structured LLM outputs ---
+pydantic>=2
+
+# --- Graph database ---
+neo4j
+
+# --- LLM client ---
+
+
+# --- Config / utilities ---
+python-dotenv
+
+# --- Optional: web UI for manual testing ---
+streamlit
+
+# --- Dev / test ---
+pytest
+
+# --- Evaluation: CUAD + RAGAS + LangSmith (optional; only needed to run
+# scripts/run_cuad_eval.py, not for the main application) ---
+# ragas
+# langchain-anthropic
+# langchain-huggingface
+langsmith
+# huggingface_hub

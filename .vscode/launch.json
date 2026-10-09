@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run ingestion demo",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "scripts.run_demo",
+      "args": ["ingest", "--file", "data/uploads/sample.pdf", "--vendor", "ABC Ltd."],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+    },
+    {
+      "name": "Run query demo",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "scripts.run_demo",
+      "args": [
+        "ask",
+        "--question",
+        "Show all contracts where ABC Ltd. is the vendor, the same clause appears in another contract, and that clause has been interpreted by multiple judgments.",
+        "--collection", "sample_pdf"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+    },
+    {
+      "name": "Debug current file",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+    },
+    {
+      "name": "Run tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-v"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+    }
+  ]
+}
